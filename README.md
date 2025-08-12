@@ -109,5 +109,6 @@ pip install -r requirements.txt
 
 --
 ##  Deployment
-**[Live Demo](https://your-deployment-link.com)
+[Live Demo](https://logisticregressor.onrender.com/)
+
 
