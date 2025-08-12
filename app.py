@@ -1,10 +1,17 @@
 from flask import Flask, render_template, request
 import pickle
-import numpy as np
-import os
+import pandas as pd
 
 app = Flask(__name__)
-model = pickle.load(open('model.pkl', 'rb'))
+
+# Load model
+with open('attrition_model.pkl', 'rb') as file:
+    model = pickle.load(file)
+
+# Features list
+features = ['ID', 'Age', 'DistanceFromHome', 'MonthlyIncome',
+            'JobSatisfaction', 'YearsAtCompany', 'WorkLifeBalance',
+            'Education', 'Overtime']
 
 @app.route('/')
 def home():
@@ -12,21 +19,31 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    input_features = [
-        float(request.form['ID']),
-        float(request.form['Age']),
-        float(request.form['Experience']),
-        float(request.form['Income']),
-        float(request.form['CCAvg']),
-        float(request.form['Education']),
-        float(request.form['Mortgage']),
-        float(request.form['CD_Account']),
-        float(request.form['CreditCard'])
-    ]
-    final_input = np.array([input_features])
-    result = model.predict(final_input)[0]
-    return render_template('result.html', prediction='Approved' if result == 1 else 'Rejected')
+    try:
+        # Get form data
+        input_data = [
+            int(request.form['ID']),
+            int(request.form['Age']),
+            int(request.form['DistanceFromHome']),
+            float(request.form['MonthlyIncome']),
+            int(request.form['JobSatisfaction']),
+            int(request.form['YearsAtCompany']),
+            int(request.form['WorkLifeBalance']),
+            int(request.form['Education']),
+            int(request.form['Overtime'])
+        ]
+
+        # Create DataFrame for prediction
+        df_input = pd.DataFrame([input_data], columns=features)
+        
+        # Predict
+        prediction = model.predict(df_input)[0]
+        result_text = "Employee is likely to leave the company." if prediction == 1 else "Employee is likely to stay."
+
+        return render_template('result.html', result=result_text)
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
